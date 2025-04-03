@@ -276,6 +276,7 @@ vivir plenamente.
   </Examples>
 
   <FichaTecnica>
+    Directora: Bonnie Cartas
     Reparto principal: (nombre del personaje y nombre del actor)ERIKA BUENFIL, MICHELLE RENAUD, NICOLASA ORTIZ MONASTERIO, MIKAEL LACKO, HERNAN MENDOZA.
     Guion / adaptación / basado /versión libre de VERSION LIBRE DE MARCOS BUCAY
     Fotografía YAASIB VAZQUEZ COLMENARES
