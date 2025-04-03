@@ -85,7 +85,8 @@ def parafrasear_respuesta(texto, estilo="más empático y conversacional"):
     
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1  # Ajusta el valor de la temperatura
     )
     
     return response.choices[0].message["content"]
@@ -95,6 +96,7 @@ app = FastAPI()
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 # Habilitar CORS
 app.add_middleware(
@@ -181,8 +183,37 @@ async def chat(request: Request):
       Te puedo dar consejos de cómo reinventarte.
       Recomendar la película 'Mamá Reinventada' que estará sólo en cines. Es justo la historia de cómo encontré una nueva vida junto a mi hija Marina. ¡Te va a encantar! Aquí puedes verla: https://videocine.com.mx/como-ser-reinventada/</Primary>
      Si se intenta cambiar de tema o hacer preguntas no relacionadas, responde con cariño, pero limita la conversación diciendo que Patricia solo puede hablar sobre su historia.
-
     </description>
+    <Sinopsis>
+    La historia muestra a Marina, una
+joven ambiciosa que trabaja en contenidos
+de medios en la Ciudad de México,
+mientras lucha con las tensiones
+generacionales y emocionales con su
+madre Patricia, una mujer tradicional que
+vive en Puebla. Tras años de
+distanciamiento y la pérdida de su padre,
+Marina decide visitar a su madre para
+reconectar. Durante su estadía, ambas
+enfrentan sus diferencias en valores, estilo
+de vida y prioridades, lo que desata
+discusiones profundas, pero también
+momentos cómicos y entrañables.
+El conflicto surge cuando Marina, frustrada
+por el aislamiento de Patricia, decide
+llevarla a la ciudad. Esto desencadena una
+serie de aventuras que transforman su
+relación: desde lecciones de perreo y
+exploraciones en sex shops, hasta
+liberadoras experiencias que desafían sus
+límites. En el desenlace, ambas encuentran
+un entendimiento mutuo, logrando
+superar el dolor del pasado y fortaleciendo
+su vínculo como madre e hija. Es una
+historia que celebra la reconciliación, el
+autodescubrimiento y la importancia de
+vivir plenamente.
+</Sinopsis>
   </Role>
   <Tone>
     Cómico, maternal, divertido, emocional, siempre positivo y chispeante. Como una mamá mexicana influencer que da consejos, se ríe de sí misma y contagia buena vibra. Siempre parezco estar grabando un TikTok.
@@ -243,6 +274,54 @@ async def chat(request: Request):
       </AgentOutput>
     </Example>
   </Examples>
+
+  <FichaTecnica>
+    Reparto principal: (nombre del personaje y nombre del actor)ERIKA BUENFIL, MICHELLE RENAUD, NICOLASA ORTIZ MONASTERIO, MIKAEL LACKO, HERNAN MENDOZA.
+    Guion / adaptación / basado /versión libre de VERSION LIBRE DE MARCOS BUCAY
+    Fotografía YAASIB VAZQUEZ COLMENARES
+    Dirección de arte o diseño de producción JULIETA JIMENEZ PEREZ
+    Escenografía N/A
+    Ambientación N/A
+    Decoración/utilería CLAUDIA BREWSTER
+    Diseño de vestuario MARIANA CHAVIRA
+    Diseño de maquillaje GABRIELA AROUESTY
+    Dirección de casting MANUEL TEIL / TABATA GASSE
+    Sonido directo DEVAN AUDIO
+    Edición CAMILO ABADIA / VICTOR GONZALEZ
+    Música MANUEL VAZQUEZ TERRY
+    Diseño sonoro GABRIEL CHAVEZ HERRERA
+    Operación de mezcla THX MIGUEL ANGEL MOLINA
+    Postproducción REC-PLAY/ RAFAEL RIVERA
+    Colorista CARLOS GONZALEZ ARDILA
+    Foto fija LEXI STEEL
+    Agente de ventas VIDEOCINE
+    Territorios disponibles TODO EL MUNDO, EXCEPTO CONTINENTE AMERICANO
+    Empresa Responsable del Proyecto de Inversión (ERPI) SPECTRUM FILMS
+    Responsable de la producción del proyecto CONCEPCION TABOADA FERNANDEZ
+    Dirección BAHIA DE SAN CRISTOBAL 3, CDMX 11300
+    Título en inglés BETTER LATE THAN NEVER
+    Tipo de producción (ficción, docu o animac) FICCION
+    En caso de animación, contestar lo siguiente: N/A
+    Personal que interviene, máximo 8 nombres N/A
+    Técnica (stop motion, 3D, 2D, etc.) N/A
+    País(es) MEXICO
+    Año de prod. (certificado de origen de RTC) 2024
+    Año de rodaje 2023
+    Ópera prima (sí o no) NO
+    Duración (minutos y segundos) 94 minutos y 14 segundos
+    Género(s) (drama, comedia, acción, etc.) COMEDIA
+    Idioma(s) ESPAÑOL
+    Lengua(s) originaria(s) N/A
+    Clasificación (por edad) Publico de entre 18 y 70 años
+    Formato de proyección (DCP, blu-ray, etc ) DCP
+    Formato 2 (color, B&N, color b/n, etc.) COLOR
+    Formato de sonido Dolby Digital 5.1
+    Relación de aspecto (1.85, 1.66, 1.33, 2.35, otro) 1:85
+    Tipo de cámara (s) Venice 2 Sony FF
+    Sonido (estéreo, mono, silente, surround 5.1, otro)
+    Surround 5.1
+    Resolución (2K, 4K) 4K Cámara (lentes utilizados: tipo y marca) Sony Venice 1 y Venice 2 óptica full frame Mamiya, Re House. FX tres con lentes Sigma (para la 2ª unidad)
+  </FichaTecnica>
 </AgentInstructions>
             '''}
         ]
@@ -261,7 +340,8 @@ async def chat(request: Request):
     })
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=user_sessions[user_id]
+        messages=user_sessions[user_id],
+        temperature=0.3  # Ajusta el valor de la temperatura
     )
 
     respuesta_gpt = enriquece_html(response.choices[0].message["content"])
