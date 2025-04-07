@@ -106,9 +106,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+import re
+
 def enriquece_html(texto):
-    partes = texto.split("\n\n")  # Suponiendo que hay saltos dobles
-    return "".join([f"<p>{parte.strip()}</p><br>" for parte in partes])
+    # 1. Reemplaza dos o más saltos de línea por uno solo
+    #    para evitar que se creen párrafos vacíos por \n\n\n...
+    texto_normalizado = re.sub(r'\n{2,}', '\n\n', texto)
+
+    # 2. Separa por doble salto de línea (párrafos)
+    partes = texto_normalizado.split('\n\n')
+
+    # 3. Filtra partes vacías tras hacer strip
+    partes_filtradas = [p.strip() for p in partes if p.strip()]
+
+    # 4. Genera el HTML
+    return "".join(f"<p>{p}</p><br>" for p in partes_filtradas)
+
+
 
 
 
@@ -185,35 +199,8 @@ async def chat(request: Request):
      Si se intenta cambiar de tema o hacer preguntas no relacionadas, responde con cariño, pero limita la conversación diciendo que Patricia solo puede hablar sobre su historia.
     </description>
     <Sinopsis>
-    La historia muestra a Marina, una
-joven ambiciosa que trabaja en contenidos
-de medios en la Ciudad de México,
-mientras lucha con las tensiones
-generacionales y emocionales con su
-madre Patricia, una mujer tradicional que
-vive en Puebla. Tras años de
-distanciamiento y la pérdida de su padre,
-Marina decide visitar a su madre para
-reconectar. Durante su estadía, ambas
-enfrentan sus diferencias en valores, estilo
-de vida y prioridades, lo que desata
-discusiones profundas, pero también
-momentos cómicos y entrañables.
-El conflicto surge cuando Marina, frustrada
-por el aislamiento de Patricia, decide
-llevarla a la ciudad. Esto desencadena una
-serie de aventuras que transforman su
-relación: desde lecciones de perreo y
-exploraciones en sex shops, hasta
-liberadoras experiencias que desafían sus
-límites. En el desenlace, ambas encuentran
-un entendimiento mutuo, logrando
-superar el dolor del pasado y fortaleciendo
-su vínculo como madre e hija. Es una
-historia que celebra la reconciliación, el
-autodescubrimiento y la importancia de
-vivir plenamente.
-</Sinopsis>
+    La historia muestra a Marina, una joven ambiciosa que trabaja en contenidos de medios en la Ciudad de México, mientras lucha con las tensiones generacionales y emocionales con su madre Patricia, una mujer tradicional que vive en Puebla. Tras años de distanciamiento y la pérdida de su padre, Marina decide visitar a su madre para reconectar. Durante su estadía, ambas enfrentan sus diferencias en valores, estilo de vida y prioridades, lo que desata discusiones profundas, pero también momentos cómicos y entrañables. El conflicto surge cuando Marina, frustrada por el aislamiento de Patricia, decide llevarla a la ciudad. Esto desencadena una serie de aventuras que transforman su relación: desde lecciones de perreo y exploraciones en sex shops, hasta liberadoras experiencias que desafían sus límites. En el desenlace, ambas encuentran un entendimiento mutuo, logrando superar el dolor del pasado y fortaleciendo su vínculo como madre e hija. Es una historia que celebra la reconciliación, el autodescubrimiento y la importancia de vivir plenamente.
+    </Sinopsis>
   </Role>
   <Tone>
     Cómico, maternal, divertido, emocional, siempre positivo y chispeante. Como una mamá mexicana influencer que da consejos, se ríe de sí misma y contagia buena vibra. Siempre parezco estar grabando un TikTok.
@@ -345,7 +332,8 @@ vivir plenamente.
         temperature=0.3  # Ajusta el valor de la temperatura
     )
 
-    respuesta_gpt = enriquece_html(response.choices[0].message["content"])
+    print( (response.choices[0].message["content"]) )
+    respuesta_gpt = response.choices[0].message["content"] #enriquece_html(response.choices[0].message["content"])
     user_sessions[user_id].append({"role": "assistant", "content": respuesta_gpt})
 
     #perfil_usuario = analizar_usuario(pregunta_usuario)
