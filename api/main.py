@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import openai
 from dotenv import load_dotenv
@@ -7,60 +7,14 @@ import json
 import numpy as np
 import datetime
 import io
+import re
 
-
-def analizar_usuario(mensaje):
-    prompt = f"""
-Eres un analizador de perfil de usuario. Dado el siguiente mensaje, devuelve una estructura JSON con:
-
-- tipo_negocio: (hotel, restaurante, guía, otro)
-- intencion: (registrarse, aumentar visibilidad, solo informarse, otro)
-- nivel_conocimiento: (nuevo, ya conoce Escapadas.mx, registrado)
-
-Mensaje del usuario:
-"{mensaje}"
-
-Responde solo el JSON, sin explicación.
-    """
-
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    try:
-        perfil = json.loads(response.choices[0].message["content"])
-    except Exception:
-        perfil = {
-            "tipo_negocio": "desconocido",
-            "intencion": "desconocido",
-            "nivel_conocimiento": "desconocido"
-        }
-    return perfil
-
-
-def parafrasear_respuesta(texto, estilo="más empático y conversacional"):
-    prompt = (
-        f"Reformula este contenido en un tono {estilo}, manteniendo la información y formato en HTML amigable, "
-        f"con párrafos <p>, saltos de línea <br> y palabras clave en <strong>:\n\n{texto}"
-    )
-    
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1  # Ajusta el valor de la temperatura
-    )
-    
-    return response.choices[0].message["content"]
-
+load_dotenv()  # Cargamos variables de entorno
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-
-# Habilitar CORS
+# 1. Habilitar CORS para que tu API pueda ser consumida desde cualquier origen
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -69,65 +23,153 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --------------------------------------------------------------------------------
+# Sección de configuración y carga de archivos
+# --------------------------------------------------------------------------------
 
-# Cargar embeddings y datos del FAQ
-with open("./api/faq_embeddings.json", "r", encoding="utf-8") as f:
-    raw_embeddings = json.load(f)
+try:
+    with open("./api/faq_embeddings.json", "r", encoding="utf-8") as f:
+        raw_embeddings = json.load(f)
+except FileNotFoundError:
+    # Manejo de error si el archivo no existe
+    print("Error: No se encontró el archivo faq_embeddings.json")
+    raw_embeddings = {}
 
-faq_embeddings = {
-    pregunta: np.array(embedding)
-    for pregunta, embedding in raw_embeddings.items()
-}
+try:
+    with open("./api/faq_data.json", "r", encoding="utf-8") as f:
+        faq = json.load(f)
+except FileNotFoundError:
+    # Manejo de error si el archivo no existe
+    print("Error: No se encontró el archivo faq_data.json")
+    faq = {}
 
-with open("./api/faq_data.json", "r", encoding="utf-8") as f:
-    faq = json.load(f)
+# Convertimos las listas de embeddings a arreglos NumPy
+faq_embeddings = {}
+for pregunta, embedding in raw_embeddings.items():
+    faq_embeddings[pregunta] = np.array(embedding)
 
-# Historial de conversación por sesión (temporal)
+# --------------------------------------------------------------------------------
+# Variables y funciones auxiliares
+# --------------------------------------------------------------------------------
+
+# Historial de conversación por sesión (almacenado temporalmente en memoria)
+# IMPORTANTE: En producción, lo ideal es usar una base de datos o Redis
 user_sessions = {}
 
-# Embedding de la pregunta
-def obtener_embedding(texto):
-    response = openai.Embedding.create(
-        model="text-embedding-ada-002",
-        input=texto
+def parafrasear_respuesta(texto: str, estilo: str = "más empático y conversacional") -> str:
+    """
+    Envía el texto a GPT para parafrasearlo con un estilo específico.
+    Regresa la respuesta como string.
+    """
+    prompt = (
+        f"Reformula este contenido en un tono {estilo}, manteniendo la información y formato en HTML amigable, "
+        f"con párrafos <p>, saltos de línea <br> y palabras clave en <strong>:\n\n{texto}"
     )
-    return np.array(response["data"][0]["embedding"])
-
-# Buscar pregunta similar
-def encontrar_pregunta_mas_similar(pregunta_usuario):
-    embedding_usuario = obtener_embedding(pregunta_usuario)
-    similitudes = {
-        pregunta: np.dot(embedding_usuario, embedding) / (
-            np.linalg.norm(embedding_usuario) * np.linalg.norm(embedding)
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1  # Ajusta la temperatura según tu preferencia
         )
-        for pregunta, embedding in faq_embeddings.items()
-    }
+        return response.choices[0].message["content"]
+    except Exception as e:
+        # Manejo de error en caso de fallo de la API
+        print(f"Error al parafrasear respuesta: {e}")
+        return texto  # En caso de error, devolvemos el texto original para no interrumpir el flujo
+
+def obtener_embedding(texto: str) -> np.ndarray:
+    """
+    Obtiene el embedding de un texto usando el modelo 'text-embedding-ada-002'.
+    Regresa un arreglo de NumPy con los valores del embedding.
+    """
+    try:
+        response = openai.Embedding.create(
+            model="text-embedding-ada-002",
+            input=texto
+        )
+        return np.array(response["data"][0]["embedding"])
+    except Exception as e:
+        # Si falla la llamada a la API, retornamos un vector vacío para evitar bloqueos
+        print(f"Error al obtener embedding: {e}")
+        return np.zeros(1536)  # El tamaño de embedding de 'ada-002' es 1536
+
+def encontrar_pregunta_mas_similar(pregunta_usuario: str) -> str:
+    """
+    Compara el embedding de la pregunta del usuario con todas las preguntas en faq_embeddings.
+    Retorna la pregunta más similar si la similitud es mayor a 0.85; de lo contrario, None.
+    """
+    embedding_usuario = obtener_embedding(pregunta_usuario)
+    
+    # Verifica si embedding_usuario no es un vector vacío:
+    if not embedding_usuario.any():
+        return None  # Si hubo error en embedding, no encontramos coincidencia
+    
+    similitudes = {}
+    for pregunta, embedding in faq_embeddings.items():
+        # Calculamos coseno de similitud
+        dot_product = np.dot(embedding_usuario, embedding)
+        norm_product = np.linalg.norm(embedding_usuario) * np.linalg.norm(embedding)
+        if norm_product != 0:
+            similitud = dot_product / norm_product
+        else:
+            similitud = 0.0
+        similitudes[pregunta] = similitud
+    
+    if len(similitudes) == 0:
+        return None
+    
+    # Pregunta con mayor similitud
     pregunta_mas_similar = max(similitudes, key=similitudes.get)
     mayor_similitud = similitudes[pregunta_mas_similar]
-    if mayor_similitud > 0.85:
-        return pregunta_mas_similar
-    return None
+    return pregunta_mas_similar if mayor_similitud > 0.85 else None
 
+# --------------------------------------------------------------------------------
 # Endpoint principal
+# --------------------------------------------------------------------------------
+
 @app.post("/chat")
 async def chat(request: Request):
+    """
+    Endpoint que recibe la pregunta del usuario, busca en el FAQ y, si no hay coincidencia,
+    continúa una conversación con GPT.
+    """
+    # 1. Obtenemos el JSON de la solicitud
     data = await request.json()
+    
+    # 2. Extraemos el mensaje. Control de longitud para evitar excesos
     pregunta_usuario = data.get("message", "")
-    user_id = request.client.host
+    if len(pregunta_usuario) > 500:
+        # Truncamos la pregunta para evitar excesos de tokens
+        pregunta_usuario = pregunta_usuario[:500]
 
-    # 1. Buscar coincidencia en el FAQ
+    # 3. Identificamos al usuario por su IP (request.client.host)
+    user_id = request.client.host
+    
+    # 4. Intentamos primero buscar coincidencia en FAQ
     pregunta_similar = encontrar_pregunta_mas_similar(pregunta_usuario)
     if pregunta_similar:
-        respuesta_original = faq[pregunta_similar]["respuesta"]
+        respuesta_original = faq.get(pregunta_similar, {}).get("respuesta", "")
+        sticker = faq.get(pregunta_similar, {}).get("sticker", "")
+        
+        # Parafraseamos la respuesta antes de devolverla
         respuesta_parafraseada = parafrasear_respuesta(respuesta_original)
-
-        return {"response": respuesta_parafraseada, "sticker": faq[pregunta_similar]["sticker"]}
-       
-
-    # 2. Si no hay coincidencia, usar memoria y GPT
+        
+        # Devolvemos la respuesta
+        return {
+            "response": respuesta_parafraseada,
+            "sticker": sticker
+        }
+    
+    # 5. Si no hay coincidencia, continuamos con la conversación GPT
+    #    Manejaremos la sesión local (en user_sessions).
+    #    IMPORTANTE: en producción lo ideal es usar una base de datos o Redis
     if user_id not in user_sessions:
-        user_sessions[user_id] = [
-            {"role": "system", "content": '''
+        # Iniciamos un nuevo historial para este usuario
+        user_sessions[user_id] = []
+        # Insertamos mensajes "system" y de configuración
+        user_sessions[user_id].append({
+            "role": "system", 
+            "content": '''
             <AgentInstructions>
   <Role>
     <name>Eres Patricia</name>
@@ -246,29 +288,41 @@ async def chat(request: Request):
     Resolución: Sony Venice 1 y Venice 2 óptica full frame Mamiya, Re House. FX tres con lentes Sigma (para la 2ª unidad)
   </FichaTecnica>
 </AgentInstructions>
-            '''}
-        ]
-
+            '''
+        })
+        # Insertamos un "user" prompt que oriente al modelo a dar respuestas cortas y concisas
+        user_sessions[user_id].append({
+            "role": "user",
+            "content": "Responde de manera muy breve y concisa, sin expandirte demasiado. Usa oraciones cortas, de no más de 4 líneas. Mantén el formato en HTML amigable y con palabras clave en <strong>."
+        })
+    
+    # 6. Agregamos el nuevo mensaje del usuario al historial
     user_sessions[user_id].append({"role": "user", "content": pregunta_usuario})
-
-    if len(user_sessions[user_id]) > 10:
-        user_sessions[user_id] = user_sessions[user_id][-10:]
-
-    # Refuerza el formato justo antes de enviar el prompt
-    user_sessions[user_id].insert(1, {
-        "role": "user", 
-         "content": "Responde de manera muy breve y concisa, sin expandirte demasiado. Usa oraciones cortas, de no más de 4 líneas. Mantén el formato en HTML amigable y con palabras clave en <strong>." 
-
-    })
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=user_sessions[user_id],
-        temperature=0.1  # Ajusta el valor de la temperatura
-    )
-
+    
+    # 7. Limitamos el historial a las últimas 10 interacciones para evitar exceso de tokens
+    if len(user_sessions[user_id]) > 12:
+        # Dejamos 1 "system", 1 "user" con directrices y las últimas 10 interacciones
+        user_sessions[user_id] = user_sessions[user_id][:2] + user_sessions[user_id][-10:]
+    
+    # 8. Llamamos a la API de OpenAI en un bloque try/except
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=user_sessions[user_id],
+            temperature=0.1
+        )
+    except Exception as e:
+        # Si hay error, devolvemos un HTTPException
+        print(f"Error al llamar a OpenAI: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al procesar la solicitud")
+    
+    # 9. Obtenemos la respuesta del modelo
     respuesta_gpt = response.choices[0].message["content"]
+    
+    # 10. Guardamos la respuesta en el historial
     user_sessions[user_id].append({"role": "assistant", "content": respuesta_gpt})  
     
+    # 11. Devolvemos la respuesta final
     return {
         "response": respuesta_gpt,
         "sticker": ""
