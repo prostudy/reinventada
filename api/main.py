@@ -6,45 +6,7 @@ import os
 import json
 import numpy as np
 import datetime
-
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import io
-
-# Autenticación con Google Sheets
-scope = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive" 
-]
-# Intenta cargar desde variable de entorno (Railway)
-google_creds_json = os.getenv("GOOGLE_CREDENTIALS")
-
-if google_creds_json:
-    # Si existe la variable en Railway, úsala
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(google_creds_json), scope)
-else:
-    # Si estás en local, usa archivo local
-    creds = ServiceAccountCredentials.from_json_keyfile_name("./api/guias-digitales-9c87ddbffba6.json", scope)
-
-client = gspread.authorize(creds)
-
-# Abre la hoja
-SHEET_NAME = "Chat Interacciones"
-sheet = client.open(SHEET_NAME).sheet1
-
-def guardar_interaccion(user_id, pregunta, respuesta, origen="gpt",tipo_negocio="desconocido",intencion="desconocido",nivel_conocimiento="desconocido"):
-    timestamp = datetime.datetime.now().isoformat()
-    row = [
-        timestamp,
-        user_id,
-        pregunta,
-        respuesta,
-        origen,
-        tipo_negocio,
-        intencion,
-        nivel_conocimiento
-    ]
-    sheet.append_row(row)
 
 
 def analizar_usuario(mensaje):
@@ -106,24 +68,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-import re
-
-def enriquece_html(texto):
-    # 1. Reemplaza dos o más saltos de línea por uno solo
-    #    para evitar que se creen párrafos vacíos por \n\n\n...
-    texto_normalizado = re.sub(r'\n{2,}', '\n\n', texto)
-
-    # 2. Separa por doble salto de línea (párrafos)
-    partes = texto_normalizado.split('\n\n')
-
-    # 3. Filtra partes vacías tras hacer strip
-    partes_filtradas = [p.strip() for p in partes if p.strip()]
-
-    # 4. Genera el HTML
-    return "".join(f"<p>{p}</p><br>" for p in partes_filtradas)
-
-
-
 
 
 # Cargar embeddings y datos del FAQ
@@ -177,12 +121,8 @@ async def chat(request: Request):
         respuesta_original = faq[pregunta_similar]["respuesta"]
         respuesta_parafraseada = parafrasear_respuesta(respuesta_original)
 
-        #perfil_usuario = analizar_usuario(pregunta_usuario)
-
-        #guardar_interaccion(user_id, pregunta_usuario, respuesta_parafraseada, origen="faq")
         return {"response": respuesta_parafraseada, "sticker": faq[pregunta_similar]["sticker"]}
-        #guardar_interaccion(user_id, pregunta_usuario, respuesta["respuesta"], origen="faq",tipo_negocio=perfil_usuario["tipo_negocio"],intencion=perfil_usuario["intencion"],nivel_conocimiento=perfil_usuario["nivel_conocimiento"])
-        #return {"response": respuesta["respuesta"], "sticker": respuesta["sticker"]}
+       
 
     # 2. Si no hay coincidencia, usar memoria y GPT
     if user_id not in user_sessions:
@@ -317,7 +257,6 @@ async def chat(request: Request):
     # Refuerza el formato justo antes de enviar el prompt
     user_sessions[user_id].insert(1, {
         "role": "user", 
-        #"content": "Recuerda: responde siempre en formato HTML amigable, con párrafos <p>, saltos de línea <br> y palabras clave en <strong>. Divide la respuesta en bloques cortos para que sea fácil de leer."
          "content": "Responde de manera muy breve y concisa, sin expandirte demasiado. Usa oraciones cortas, de no más de 4 líneas. Mantén el formato en HTML amigable y con palabras clave en <strong>." 
 
     })
@@ -327,12 +266,9 @@ async def chat(request: Request):
         temperature=0.1  # Ajusta el valor de la temperatura
     )
 
-    print( (response.choices[0].message["content"]) )
-    respuesta_gpt = response.choices[0].message["content"] #enriquece_html(response.choices[0].message["content"])
-    user_sessions[user_id].append({"role": "assistant", "content": respuesta_gpt})
-
-    #perfil_usuario = analizar_usuario(pregunta_usuario)
-    #guardar_interaccion(user_id, pregunta_usuario, respuesta_gpt, origen="gpt",tipo_negocio=perfil_usuario["tipo_negocio"],intencion=perfil_usuario["intencion"],nivel_conocimiento=perfil_usuario["nivel_conocimiento"])
+    respuesta_gpt = response.choices[0].message["content"]
+    user_sessions[user_id].append({"role": "assistant", "content": respuesta_gpt})  
+    
     return {
         "response": respuesta_gpt,
         "sticker": ""
