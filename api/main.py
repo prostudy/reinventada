@@ -266,49 +266,44 @@ async def chat(request: Request):
     Directora: Bonnie Cartas
     Reparto principal: (nombre del personaje y nombre del actor)ERIKA BUENFIL, MICHELLE RENAUD, NICOLASA ORTIZ MONASTERIO, MIKAEL LACKO, HERNAN MENDOZA.
     Guion / adaptación / basado /versión libre de VERSION LIBRE DE MARCOS BUCAY
-    Fotografía YAASIB VAZQUEZ COLMENARES
-    Dirección de arte o diseño de producción JULIETA JIMENEZ PEREZ
-    Escenografía N/A
-    Ambientación N/A
-    Decoración/utilería CLAUDIA BREWSTER
-    Diseño de vestuario MARIANA CHAVIRA
-    Diseño de maquillaje GABRIELA AROUESTY
-    Dirección de casting MANUEL TEIL / TABATA GASSE
-    Sonido directo DEVAN AUDIO
-    Edición CAMILO ABADIA / VICTOR GONZALEZ
-    Música MANUEL VAZQUEZ TERRY
-    Diseño sonoro GABRIEL CHAVEZ HERRERA
-    Operación de mezcla THX MIGUEL ANGEL MOLINA
-    Postproducción REC-PLAY/ RAFAEL RIVERA
-    Colorista CARLOS GONZALEZ ARDILA
-    Foto fija LEXI STEEL
-    Agente de ventas VIDEOCINE
-    Territorios disponibles TODO EL MUNDO, EXCEPTO CONTINENTE AMERICANO
-    Empresa Responsable del Proyecto de Inversión (ERPI) SPECTRUM FILMS
-    Responsable de la producción del proyecto CONCEPCION TABOADA FERNANDEZ
-    Dirección BAHIA DE SAN CRISTOBAL 3, CDMX 11300
-    Título en inglés BETTER LATE THAN NEVER
-    Tipo de producción (ficción, docu o animac) FICCION
+    Fotografía: YAASIB VAZQUEZ COLMENARES
+    Dirección de arte o diseño de producción: JULIETA JIMENEZ PEREZ
+    Decoración/utilería: CLAUDIA BREWSTER
+    Diseño de vestuario: MARIANA CHAVIRA
+    Diseño de maquillaje: GABRIELA AROUESTY
+    Dirección de casting: MANUEL TEIL / TABATA GASSE
+    Sonido directo: DEVAN AUDIO
+    Edición CAMILO: ABADIA / VICTOR GONZALEZ
+    Música: MANUEL VAZQUEZ TERRY
+    Diseño sonoro: GABRIEL CHAVEZ HERRERA
+    Operación de mezcla: THX MIGUEL ANGEL MOLINA
+    Postproducción: REC-PLAY/ RAFAEL RIVERA
+    Colorista: CARLOS GONZALEZ ARDILA
+    Foto fija: LEXI STEEL
+    Agente de ventas: VIDEOCINE
+    Territorios disponibles: TODO EL MUNDO, EXCEPTO CONTINENTE AMERICANO
+    Empresa Responsable del Proyecto de Inversión: (ERPI) SPECTRUM FILMS
+    Responsable de la producción del proyecto: CONCEPCION TABOADA FERNANDEZ
+    Dirección: BAHIA DE SAN CRISTOBAL 3, CDMX 11300
+    Título en inglés: BETTER LATE THAN NEVER
+    Tipo de producción: (ficción, docu o animac) FICCION
     En caso de animación, contestar lo siguiente: N/A
-    Personal que interviene, máximo 8 nombres N/A
-    Técnica (stop motion, 3D, 2D, etc.) N/A
-    País(es) MEXICO
-    Año de prod. (certificado de origen de RTC) 2024
-    Año de rodaje 2023
-    Ópera prima (sí o no) NO
-    Duración (minutos y segundos) 94 minutos y 14 segundos
-    Género(s) (drama, comedia, acción, etc.) COMEDIA
-    Idioma(s) ESPAÑOL
-    Lengua(s) originaria(s) N/A
-    Clasificación (por edad) Publico de entre 18 y 70 años
-    Formato de proyección (DCP, blu-ray, etc ) DCP
-    Formato 2 (color, B&N, color b/n, etc.) COLOR
-    Formato de sonido Dolby Digital 5.1
-    Relación de aspecto (1.85, 1.66, 1.33, 2.35, otro) 1:85
-    Tipo de cámara (s) Venice 2 Sony FF
-    Sonido (estéreo, mono, silente, surround 5.1, otro)
-    Surround 5.1
-    Resolución (2K, 4K) 4K Cámara (lentes utilizados: tipo y marca) Sony Venice 1 y Venice 2 óptica full frame Mamiya, Re House. FX tres con lentes Sigma (para la 2ª unidad)
+    Técnica: (stop motion, 3D, 2D, etc.) N/A
+    País(es): MEXICO
+    Año de prod: (certificado de origen de RTC) 2024
+    Año de rodaje: 2023
+    Ópera prima: NO
+    Duración (minutos y segundos): 94 minutos y 14 segundos
+    Género(s): COMEDIA
+    Idioma(s): ESPAÑOL
+    Clasificación (por edad): Publico de entre 18 y 70 años
+    Formato de proyección: DCP
+    Formato 2: COLOR
+    Formato de sonido: Dolby Digital 5.1
+    Relación de aspecto: 1:85
+    Tipo de cámara (s): Venice 2 Sony FF
+    Sonido: Surround 5.1
+    Resolución: Sony Venice 1 y Venice 2 óptica full frame Mamiya, Re House. FX tres con lentes Sigma (para la 2ª unidad)
   </FichaTecnica>
 </AgentInstructions>
             '''}
@@ -329,7 +324,7 @@ async def chat(request: Request):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=user_sessions[user_id],
-        temperature=0.3  # Ajusta el valor de la temperatura
+        temperature=0.1  # Ajusta el valor de la temperatura
     )
 
     print( (response.choices[0].message["content"]) )
