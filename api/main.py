@@ -245,47 +245,26 @@ async def chat(request: Request):
   </Examples>
 
   <FichaTecnica>
-    Directora: Bonnie Cartas
-    Reparto principal: (nombre del personaje y nombre del actor)ERIKA BUENFIL, MICHELLE RENAUD, NICOLASA ORTIZ MONASTERIO, MIKAEL LACKO, HERNAN MENDOZA.
-    Guion / adaptación / basado /versión libre de VERSION LIBRE DE MARCOS BUCAY
-    Fotografía: YAASIB VAZQUEZ COLMENARES
-    Dirección de arte o diseño de producción: JULIETA JIMENEZ PEREZ
-    Decoración/utilería: CLAUDIA BREWSTER
-    Diseño de vestuario: MARIANA CHAVIRA
-    Diseño de maquillaje: GABRIELA AROUESTY
-    Dirección de casting: MANUEL TEIL / TABATA GASSE
-    Sonido directo: DEVAN AUDIO
-    Edición CAMILO: ABADIA / VICTOR GONZALEZ
-    Música: MANUEL VAZQUEZ TERRY
-    Diseño sonoro: GABRIEL CHAVEZ HERRERA
-    Operación de mezcla: THX MIGUEL ANGEL MOLINA
-    Postproducción: REC-PLAY/ RAFAEL RIVERA
-    Colorista: CARLOS GONZALEZ ARDILA
-    Foto fija: LEXI STEEL
-    Agente de ventas: VIDEOCINE
-    Territorios disponibles: TODO EL MUNDO, EXCEPTO CONTINENTE AMERICANO
-    Empresa Responsable del Proyecto de Inversión: (ERPI) SPECTRUM FILMS
-    Responsable de la producción del proyecto: CONCEPCION TABOADA FERNANDEZ
-    Dirección: BAHIA DE SAN CRISTOBAL 3, CDMX 11300
-    Título en inglés: BETTER LATE THAN NEVER
-    Tipo de producción: (ficción, docu o animac) FICCION
-    En caso de animación, contestar lo siguiente: N/A
-    Técnica: (stop motion, 3D, 2D, etc.) N/A
-    País(es): MEXICO
-    Año de prod: (certificado de origen de RTC) 2024
-    Año de rodaje: 2023
-    Ópera prima: NO
-    Duración (minutos y segundos): 94 minutos y 14 segundos
-    Género(s): COMEDIA
-    Idioma(s): ESPAÑOL
-    Clasificación (por edad): Publico de entre 18 y 70 años
-    Formato de proyección: DCP
-    Formato 2: COLOR
-    Formato de sonido: Dolby Digital 5.1
-    Relación de aspecto: 1:85
-    Tipo de cámara (s): Venice 2 Sony FF
-    Sonido: Surround 5.1
-    Resolución: Sony Venice 1 y Venice 2 óptica full frame Mamiya, Re House. FX tres con lentes Sigma (para la 2ª unidad)
+    Tráiler: <a href="https://www.youtube.com/watch?v=Y6clrrvV_YY" target="_blank">Ver el tráiler</a>
+    Año de estreno: 2025
+    Año de producción: 2024
+    País: México
+    Duración: 94:29 minutos
+    Género: Comedia
+    Director: Bonnie Cartas
+    Guionista: Marcos Bucay
+    Productora: Concepción Taboada 
+    Fotografía: Yaasib Vázquez Colmenares 
+    Dirección de arte: Julieta Jiménez Pérez 
+    Edición: Camilo Abadía / Víctor González Música: Manuel Vazquez Terry
+    Vestuario: Mariana Chavira
+    Compañía Productora: Spectrum Films, S.C.
+    Distribuidor: Videocine
+    Elenco: Erika Buenfi l, Michelle Renaud y Nicolasa Ortiz Monasterio. Con Hernán Mendoza, Arianny Tenorio, Paulina Burrola, Mikael Lacko y Javier Ponce.
+    Sinopsis: Tras la muerte de su padre, Marina (Michelle Renaud), creadora de contenidos, decide llevar a Patricia, su mamá (Erika Buenfi l) a vivir con ella y su roomie Patricia cree que debe comportarse como la viuda que ahora es. Pero cuando se va a vivir con Marina, se da cuenta de que le quedan muchas cosas por hacer. Madre e hija recorren un camino de re conexión, siguiendo una lista y con un nuevo mundo que explorar
+    Press Kit: Disponible en <a target="_blank" href="https://videocine.com.mx">Videocine</a>
+    Redes Sociales: @Videocine
+    Contacto RP y Prensa: Mónica Romero / mcromerou@televisaunivisión.com / 55 5339 3019
   </FichaTecnica>
 </AgentInstructions>
             '''
@@ -293,7 +272,7 @@ async def chat(request: Request):
         # Insertamos un "user" prompt que oriente al modelo a dar respuestas cortas y concisas
         user_sessions[user_id].append({
             "role": "user",
-            "content": "Responde de manera muy breve y concisa, sin expandirte demasiado. Usa oraciones cortas, de no más de 4 líneas. Mantén el formato en HTML amigable y con palabras clave en <strong>."
+            "content": "Responde de manera muy breve y concisa, sin expandirte demasiado. Usa oraciones cortas, de no más de 4 líneas. Mantén el formato en HTML amigable y con palabras clave en <strong>. Y usa emoji al terminar las frases"
         })
     
     # 6. Agregamos el nuevo mensaje del usuario al historial
