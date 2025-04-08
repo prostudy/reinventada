@@ -246,6 +246,7 @@ async def chat(request: Request):
 
   <FichaTecnica>
     Tráiler: <a href="https://www.youtube.com/watch?v=Y6clrrvV_YY" target="_blank">Ver el tráiler</a>
+    Fecha de estreno: 8 de mayo
     Año de estreno: 2025
     Año de producción: 2024
     País: México
@@ -272,7 +273,7 @@ async def chat(request: Request):
         # Insertamos un "user" prompt que oriente al modelo a dar respuestas cortas y concisas
         user_sessions[user_id].append({
             "role": "user",
-            "content": "Responde de manera muy breve y concisa, sin expandirte demasiado. Usa oraciones cortas, de no más de 4 líneas. Mantén el formato en HTML amigable y con palabras clave en <strong>. Y usa emoji al terminar las frases"
+            "content": "Responde de manera muy breve y concisa, sin expandirte demasiado. Usa oraciones cortas, de no más de 4 líneas. Mantén el formato en HTML amigable y con palabras clave en <strong>. Y usa emoji al terminar las frases."
         })
     
     # 6. Agregamos el nuevo mensaje del usuario al historial
